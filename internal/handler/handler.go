@@ -1,0 +1,79 @@
+package handler
+
+import (
+	"encoding/json"
+	"net/http"
+	"time"
+	"github.com/google/uuid"
+	"github.com/vector-10/url-shortner/internal/store"
+	"github.com/vector-10/url-shortner/internal/models"
+)
+
+// this handler is the layer where HTTP requests come in and are processed
+type Handler struct {
+	store store.Store
+}
+
+func NewHandler(s store.Store) *Handler {
+	return &Handler{store: s}
+}
+
+func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
+	var record models.URLRecord
+
+	if err := json.NewDecoder(r.Body).Decode(&record); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	record.ID = uuid.New().String()
+	record.CreatedAt = time.Now()
+	record.Clicks = 0
+
+	if record.Slug == "" {
+		record.Slug = generateSlug()
+	}
+
+	if err := h.store.Save(&record); err != nil {
+		http.Error(w, "could not save record", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(record)
+}
+
+func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
+	slug := r.PathValue("slug")
+
+	record, err := h.store.GetBySlug(slug)
+	if err != nil {
+		http.Error(w, "URL not found", http.StatusNotFound)
+		return
+	}
+
+	if err := h.store.IncrementClicks(slug); err != nil {
+		http.Error(w, "could not increment clicks", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, record.LongURL, http.StatusMovedPermanently)
+}
+
+func (h *Handler) Stats(w http. ResponseWriter, r*http.Request) {
+	slug := r.PathValue("slug")
+
+	record, err := h.store.GetBySlug(slug)
+	if err != nil {
+		http.Error(w, "URL not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(record)
+}
+
+func generateSlug() string {
+	return uuid.New().String()[:8]
+}
