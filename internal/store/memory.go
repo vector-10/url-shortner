@@ -1,8 +1,10 @@
 package store
 
 import (
+	"errors"
 	"sync"
-	"errors"	
+	"time"
+
 	"github.com/vector-10/url-shortner/internal/models"
 )
 
@@ -59,4 +61,21 @@ func (m *MemoryStore) Delete(slug string) error {
 	}
 	delete(m.records, slug)
 	return nil
+}
+
+func (m *MemoryStore) StartCleanup(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			m.mu.Lock()
+			for slug, record := range m.records {
+				if !record.ExpiresAt.IsZero()&& time.Now().After(record.ExpiresAt){
+				delete(m.records, slug)
+				}
+			}
+			m.mu.Unlock()
+		}
+	}()
 }

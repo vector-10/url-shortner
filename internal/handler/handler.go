@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 	"github.com/google/uuid"
+	"github.com/skip2/go-qrcode"
 	"github.com/vector-10/url-shortner/internal/store"
 	"github.com/vector-10/url-shortner/internal/models"
 )
@@ -72,6 +73,25 @@ func (h *Handler) Stats(w http. ResponseWriter, r*http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(record)
+}
+
+func (h *Handler) QRCode(w http.ResponseWriter, r*http.Request) {
+	slug := r.PathValue("slug")
+
+	_, err := h.store.GetBySlug(slug)
+	if err != nil {
+		http.Error(w, "URL not found", http.StatusNotFound)
+		return
+	}
+
+	shortURL := "http://localhost:8080/" + slug
+	png, err := qrcode.Encode(shortURL, qrcode.Medium, 256)
+	if err != nil {
+		http.Error(w, "could not generate QR code", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Write(png)
 }
 
 func generateSlug() string {
