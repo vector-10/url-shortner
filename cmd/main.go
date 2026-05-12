@@ -3,8 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"syscall"
 	"time"
-    "github.com/vector-10/url-shortner/internal/handler"
+	"context"
+	"os"
+	"os/signal"	
+	"github.com/vector-10/url-shortner/internal/handler"
 	"github.com/vector-10/url-shortner/internal/store"
 )
 
@@ -20,6 +24,31 @@ func main() {
 	mux.HandleFunc("GET /{slug}", h.Redirect)
 	mux.HandleFunc("GET /{slug}/stats", h.Stats)
 
-	fmt.Println("Server running on PORT 8080")
-	http.ListenAndServe(":8080", mux)
+	server := &http.Server {
+		Addr: ":8080",
+		Handler: mux,
+	}
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		fmt.Println("Server running on PORT 8080")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			fmt.Println("Server error:", err)
+		}
+	}()
+
+	<-quit
+	fmt.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		fmt.Println("Forced shutdown:", err)
+	}
+
+	fmt.Println("Server stopped")
+
 }
