@@ -3,11 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 	"github.com/google/uuid"
 	"github.com/skip2/go-qrcode"
-	"github.com/vector-10/url-shortner/internal/store"
 	"github.com/vector-10/url-shortner/internal/models"
+	"github.com/vector-10/url-shortner/internal/store"
 )
 
 // this handler is the layer where HTTP requests come in and are processed
@@ -27,6 +28,16 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 		return
 	}
 
+	if record.LongURL == "" {
+		http.Error(w, "long_url is required", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := url.ParseRequestURI(record.LongURL); err != nil {
+		http.Error(w, "long_url is not a valid URL", http.StatusBadRequest)
+		return
+	}
+
 	record.ID = uuid.New().String()
 	record.CreatedAt = time.Now()
 	record.Clicks = 0
@@ -36,7 +47,7 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 	}
 
 	if err := h.store.Save(&record); err != nil {
-		http.Error(w, "could not save record", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 

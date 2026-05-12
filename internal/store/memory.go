@@ -4,7 +4,6 @@ import (
 	"errors"
 	"sync"
 	"time"
-
 	"github.com/vector-10/url-shortner/internal/models"
 )
 
@@ -22,6 +21,10 @@ import (
  func(m *MemoryStore) Save(record *models.URLRecord) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if _, exists := m.records[record.Slug]; exists {
+		return errors.New("slug already taken")
+	}
 
 	m.records[record.Slug] = record
 	return nil
