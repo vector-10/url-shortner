@@ -13,8 +13,9 @@ import (
 )
 
 func main() {
-	s := store.NewMemoryStore()
-	s.StartCleanup(1 * time.Minute)
+	// s := store.NewMemoryStore()
+	// s.StartCleanup(1 * time.Minute)
+	s := store.NewRedisStore("localhost:6379")
 	h := handler.NewHandler(s)
 
 

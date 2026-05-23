@@ -12,7 +12,6 @@ import (
 
 type RedisStore struct {
 	client *redis.Client
-
 }
 
 
@@ -62,4 +61,10 @@ func (r *RedisStore) IncrementClicks(slug string) error {
 
 	record.Clicks++
 	return r.Save(record)
+}
+
+
+func (r *RedisStore) Delete(slug string) error {
+	ctx := context.Background()
+	return r.client.Del(ctx, slug).Err()
 }

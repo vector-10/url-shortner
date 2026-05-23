@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
 	"github.com/google/uuid"
 	"github.com/skip2/go-qrcode"
 	"github.com/vector-10/url-shortner/internal/models"
@@ -33,14 +34,16 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 		return
 	}
 
-	if _, err := url.ParseRequestURI(record.LongURL); err != nil {
-		http.Error(w, "long_url is not a valid URL", http.StatusBadRequest)
+	parsed, err := url.ParseRequestURI(record.LongURL)
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+		http.Error(w, "long_url must be a valid http or https URL", http.StatusBadRequest)
 		return
 	}
 
 	record.ID = uuid.New().String()
 	record.CreatedAt = time.Now()
 	record.Clicks = 0
+	record.ExpiresAt = record.CreatedAt.Add(3 * time.Hour)
 
 	if record.Slug == "" {
 		record.Slug = generateSlug()
@@ -70,7 +73,7 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, record.LongURL, http.StatusMovedPermanently)
+	http.Redirect(w, r, record.LongURL, http.StatusFound)
 }
 
 func (h *Handler) Stats(w http. ResponseWriter, r*http.Request) {
