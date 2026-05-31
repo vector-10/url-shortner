@@ -83,9 +83,13 @@ func (r *RedisStore) ListByUser(userID string) ([]*models.URLRecord, error) {
 	for _, slug := range slugs {
 		record, err := r.GetBySlug(slug)
 		if err != nil {
-			return nil, err
+			continue
 		}
 		records = append(records, record)
+	}
+
+	if records == nil {
+		records = []*models.URLRecord{}
 	}
 
 	return records, nil

@@ -116,7 +116,7 @@ func (h *Handler) ListURLs(w http.ResponseWriter, r*http.Request) {
 
 	if userID == "" {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		
+		return
 	}
 
 	records, err := h.store.ListByUser(userID)
