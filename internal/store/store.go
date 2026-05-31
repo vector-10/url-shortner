@@ -8,6 +8,7 @@ type Store interface {
  GetBySlug(slug string) (*models.URLRecord, error)
  IncrementClicks(slug string) error
  Delete(slug string) error
+ ListByUser(userID string) ([]*models.URLRecord, error)
 
 }
 

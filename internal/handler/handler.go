@@ -45,6 +45,9 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 	record.Clicks = 0
 	record.ExpiresAt = record.CreatedAt.Add(3 * time.Hour)
 
+	userID, _ := r.Context().Value(UserIDKey).(string)
+	record.UserID = userID
+
 	if record.Slug == "" {
 		record.Slug = generateSlug()
 	}
@@ -106,6 +109,25 @@ func (h *Handler) QRCode(w http.ResponseWriter, r*http.Request) {
 	}
 	w.Header().Set("Content-Type", "image/png")
 	w.Write(png)
+}
+
+func (h *Handler) ListURLs(w http.ResponseWriter, r*http.Request) {
+	userID, _ := r.Context().Value(UserIDKey).(string)
+
+	if userID == "" {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		
+	}
+
+	records, err := h.store.ListByUser(userID)
+
+	if err != nil {
+		http.Error(w, "could not fetch URLs", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(records)
 }
 
 func generateSlug() string {
