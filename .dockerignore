@@ -1,0 +1,5 @@
+client/
+tmp/
+.env
+.git
+*.md
