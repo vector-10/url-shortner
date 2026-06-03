@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -15,10 +16,11 @@ import (
 // this handler is the layer where HTTP requests come in and are processed
 type Handler struct {
 	store store.Store
+	cache *store.RedisCache
 }
 
-func NewHandler(s store.Store) *Handler {
-	return &Handler{store: s}
+func NewHandler(s store.Store, c *store.RedisCache) *Handler {
+	return &Handler{store: s, cache: c}
 }
 
 func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
@@ -42,8 +44,9 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 
 	record.ID = uuid.New().String()
 	record.CreatedAt = time.Now()
-	record.Clicks = 0
-	record.ExpiresAt = record.CreatedAt.Add(3 * time.Hour)
+	record.TotalClicks = 0
+	expiresAt := record.CreatedAt.Add(3 * time.Hour)
+	record.ExpiresAt = &expiresAt
 
 	userID, _ := r.Context().Value(UserIDKey).(string)
 	record.UserID = userID
@@ -65,18 +68,61 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 
-	record, err := h.store.GetBySlug(slug)
+	record, err := h.cache.GetCachedSlug(slug)
 	if err != nil {
-		http.Error(w, "URL not found", http.StatusNotFound)
+		log.Printf("cache error for slug %s: %v", slug, err)
+	}
+
+	if record == nil {
+		record, err = h.store.GetBySlug(slug)
+		if err != nil {
+			logClickEvent(h, slug, r, false, "slug not found")
+			http.Error(w, "URL not found", http.StatusNotFound)
+			return
+		}
+		h.cache.CacheSlug(record)
+	}
+
+	if !record.IsActive {
+		logClickEvent(h, slug, r, false, "link inactive")
+		http.Error(w, "URL is not active", http.StatusFound)
 		return
 	}
 
-	if err := h.store.IncrementClicks(slug); err != nil {
-		http.Error(w, "could not increment clicks", http.StatusInternalServerError)
+	if record.ExpiresAt != nil && time.Now().After(*record.ExpiresAt) {
+		logClickEvent(h, slug, r, false, "link expired")
+		http.Error(w, "URL has expired", http.StatusFound)
 		return
 	}
 
-	http.Redirect(w, r, record.LongURL, http.StatusFound)
+	if record.MaxClicks != nil && record.TotalClicks >= *record.MaxClicks {
+        logClickEvent(h, slug, r, false, "max_clicks_reached")
+        http.Error(w, "URL not found", http.StatusNotFound)
+        return
+    }
+
+    logClickEvent(h, slug, r, true, "")
+
+    if record.MaxClicks != nil && *record.MaxClicks == 1 {
+        h.store.DeactivateSlug(slug)
+        h.cache.InvalidateSlug(slug)
+    }
+
+    h.store.IncrementClicks(slug)
+    http.Redirect(w, r, record.LongURL, http.StatusFound)
+}
+
+func logClickEvent(h *Handler, slug string, r *http.Request, wasvalid bool, reason string) {
+	event := &models.ClickEvent{
+		Slug:            slug,
+		IPAddress: r.RemoteAddr,
+		UserAgent: r.UserAgent(),
+		WasValid: wasvalid,
+		RejectionReason: reason,
+	}
+	if err := h.store.LogClickEvent(event); err != nil {
+		log.Printf("failed to log click event: %v", err)
+	}
 }
 
 func (h *Handler) Stats(w http. ResponseWriter, r*http.Request) {
