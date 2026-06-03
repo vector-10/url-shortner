@@ -13,16 +13,10 @@ type PostgresStore struct {
 	db *sql.DB
 }
 
-func NewPostgresStore(connStr string) (*PostgresStore, error) {
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-	return &PostgresStore{db: db}, nil
+func NewPostgresStore(db *sql.DB) *PostgresStore {
+	return &PostgresStore{db: db}
 }
+
 
 func (p *PostgresStore) Save(record *models.URLRecord) error {
 	_, err := p.db.Exec(`
@@ -45,7 +39,7 @@ func (p *PostgresStore) Save(record *models.URLRecord) error {
 
 func (p *PostgresStore) GetBySlug(slug string) (*models.URLRecord, error) {
 	row := p.db.QueryRow(`
-	SELECT id, slug, long_url, user_id, created_at, expires_at, is_active, max_clicks, total_clicks
+	SELECT id, slug, long_url, user_id, created_at, expires_at, is_active, max_clicks, total_clicks,
 	link_type FROM url_records WHERE slug = $1`, slug)
 
 	var record models.URLRecord

@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,6 +12,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"github.com/vector-10/url-shortner/internal/handler"
 	"github.com/vector-10/url-shortner/internal/store"
 )
@@ -33,16 +36,23 @@ func corsMiddleware(next http.Handler) http.Handler {
 func main() {
 	godotenv.Load()
 
-	redisAddr := os.Getenv("REDIS_ADDR")
+	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
+	if err != nil {
+		log.Fatal("failed to connect to postgres:", err)
+	}
+	defer db.Close()
 
+	if err := db.Ping(); err != nil {
+		log.Fatal("failed to ping postgres:", err)
+	}
 
-	s := store.NewRedisStore(redisAddr)
-	us := store.NewRedisUserStore(redisAddr)
+	s := store.NewPostgresStore(db)
+	us := store.NewPostgresUserStore(db)
+	cache := store.NewRedisCache(os.Getenv("REDIS_ADDR"))
 
-	h := handler.NewHandler(s)
+	h := handler.NewHandler(s, cache)
 	ah := handler.NewAuthHandler(us)
 	oh := handler.NewOAuthHandler(us)
-
  
 
 	mux := http.NewServeMux()
