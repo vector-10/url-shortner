@@ -9,7 +9,8 @@ type Store interface {
  IncrementClicks(slug string) error
  Delete(slug string) error
  ListByUser(userID string) ([]*models.URLRecord, error)
-
+ LogClickEvent(event *models.ClickEvent) error
+ DeactivateSlug(slug string) error
 }
 
 
