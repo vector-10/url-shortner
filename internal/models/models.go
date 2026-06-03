@@ -24,3 +24,10 @@ type ClickEvent struct {
     WasValid        bool       `json:"was_valid"`
     RejectionReason string     `json:"rejection_reason"`
 }
+
+type User struct {
+    ID           string    `json:"id"`
+    Email        string    `json:"email"`
+    PasswordHash string    `json:"password_hash"`
+    CreatedAt    time.Time `json:"created_at"`
+}
