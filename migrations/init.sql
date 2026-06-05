@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS url_records (
     long_url TEXT NOT NULL,
     user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPZ NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMPTZ
-    is_active BOOLEAN NOT NULL DEFAULT TRUE
+    expires_at TIMESTAMPTZ,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     max_clicks INT,
     total_clicks INT NOT NULL DEFAULT 0,
     link_type link_type_enum NOT NULL DEFAULT 'general'
