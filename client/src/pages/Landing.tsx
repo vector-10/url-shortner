@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react"
+import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { shortenURL } from "../api"
@@ -6,7 +7,6 @@ import { shortenURL } from "../api"
 export default function Landing() {
   const [url, setUrl] = useState("")
   const [result, setResult] = useState<string | null>(null)
-  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -19,7 +19,6 @@ export default function Landing() {
       navigate("/auth")
       return
     }
-    setError("")
     setResult(null)
     setLoading(true)
     try {
@@ -27,7 +26,14 @@ export default function Landing() {
       setResult(`http://localhost:8080/${data.slug}`)
       setUrl("")
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      const message = err instanceof Error ? err.message : "Something went wrong"
+
+      if(message.includes("invalid") || message.includes("expired") || message.includes("token")) {
+        toast.error("Session expired. Please sign in again.")
+        setTimeout(() => navigate("/auth"), 1500)
+      } else {
+        toast.error(message)
+      }
     } finally {
       setLoading(false)
     }
@@ -81,10 +87,6 @@ export default function Landing() {
               {loading ? "..." : "Shorten"}
             </button>
           </form>
-
-          {error && (
-            <p className="text-red-400 text-xs mt-3 font-mono">{error}</p>
-          )}
 
           {result && (
             <div className="mt-3 flex items-center justify-between border border-zinc-800 px-4 py-3 rounded-md bg-zinc-900">
