@@ -9,6 +9,8 @@ export default function Landing() {
   const [result, setResult] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [linkType, setLinkType] = useState("general")
+  const [singleUse, setSingleUse] = useState(false)
 
   const { token } = useAuth()
   const navigate = useNavigate()
@@ -22,7 +24,7 @@ export default function Landing() {
     setResult(null)
     setLoading(true)
     try {
-      const data = await shortenURL(url, token)
+      const data = await shortenURL(url, token, linkType, singleUse)
       setResult(`http://localhost:8080/${data.slug}`)
       setUrl("")
     } catch (err: unknown) {
@@ -87,6 +89,30 @@ export default function Landing() {
               {loading ? "..." : "Shorten"}
             </button>
           </form>
+
+          {/* Options */}
+          <div className="flex items-center gap-4 mt-3">
+            <select
+              value={linkType}
+              onChange={(e) => setLinkType(e.target.value)}
+              className="bg-zinc-900 text-zinc-400 text-xs px-3 py-2 border border-zinc-800 rounded-md outline-none focus:border-zinc-600 transition-colors"
+            >
+              <option value="general">General</option>
+              <option value="payment">Payment</option>
+              <option value="kyc">KYC</option>
+              <option value="onboarding">Onboarding</option>
+            </select>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={singleUse}
+                onChange={(e) => setSingleUse(e.target.checked)}
+                className="accent-lime-400"
+              />
+              <span className="text-xs text-zinc-500">Single-use link</span>
+            </label>
+          </div>
 
           {result && (
             <div className="mt-3 flex items-center justify-between border border-zinc-800 px-4 py-3 rounded-md bg-zinc-900">

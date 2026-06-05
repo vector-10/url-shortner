@@ -27,11 +27,15 @@ export async function login(email: string, password: string) {
   return res.json()
 }
 
-export async function shortenURL(longURL: string, token: string) {
+export async function shortenURL(longURL: string, token: string, linkType = "general", singleUse = false) {
   const res = await fetch(`${BASE_URL}/shorten`, {
     method: "POST",
     headers: authHeaders(token),
-    body: JSON.stringify({ long_url: longURL }),
+    body: JSON.stringify({
+      long_url: longURL,
+      link_type: linkType,
+      max_clicks: singleUse ? 1 : null,
+    }),
   })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
