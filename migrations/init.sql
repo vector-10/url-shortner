@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS url_records (
     slug VARCHAR(255) UNIQUE NOT NULL,
     long_url TEXT NOT NULL,
     user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMPZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMPTZ,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     max_clicks INT,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS url_records (
 
 --click events (audit trail)
 CREATE TABLE IF NOT EXISTS click_events (
-    id VARCHAR(36) PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     slug VARCHAR(20) NOT NULL,
     clicked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     ip_address VARCHAR(45),

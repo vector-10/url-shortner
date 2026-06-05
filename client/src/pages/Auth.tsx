@@ -2,12 +2,12 @@ import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { login, signup } from "../api"
+import { toast } from "sonner"
 
 export default function Auth() {
   const [tab, setTab] = useState<"login" | "signup">("login")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
   const { login: saveToken } = useAuth()
@@ -15,7 +15,6 @@ export default function Auth() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError("")
     setLoading(true)
     try {
       const data = tab === "login"
@@ -24,7 +23,12 @@ export default function Auth() {
       saveToken(data.token)
       navigate("/dashboard")
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong")
+      const message = err instanceof Error ? err.message : "Something went wrong"
+      if (tab === "login") {
+        toast.error("Invalid email or password. Please try again.")
+      } else {
+        toast.error(message.includes("already") ? "An account with this email already exists." : "Could not create account. Please try again.")
+      }
     } finally {
       setLoading(false)
     }
@@ -84,10 +88,6 @@ export default function Auth() {
               className="w-full bg-zinc-900 text-zinc-100 text-sm px-3 py-2.5 border border-zinc-800 rounded-md outline-none placeholder:text-zinc-700 focus:border-zinc-600 transition-colors"
             />
           </div>
-
-          {error && (
-            <p className="text-red-400 text-xs font-mono">{error}</p>
-          )}
 
           <button
             type="submit"

@@ -45,8 +45,12 @@ func (h *Handler) ShortenURL(w http.ResponseWriter, r*http.Request) {
 	record.ID = uuid.New().String()
 	record.CreatedAt = time.Now()
 	record.TotalClicks = 0
+	record.IsActive = true
 	expiresAt := record.CreatedAt.Add(3 * time.Hour)
 	record.ExpiresAt = &expiresAt
+	if record.LinkType == "" {
+		record.LinkType = "general"
+	}
 
 	userID, _ := r.Context().Value(UserIDKey).(string)
 	record.UserID = userID
