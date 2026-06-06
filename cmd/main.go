@@ -20,7 +20,7 @@ import (
 
 func corsMiddleware(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+			w.Header().Set("Access-Control-Allow-Origin", os.Getenv("FRONTEND_URL"))
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -57,7 +57,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	
-	//public routes
 	mux.HandleFunc("POST /signup", ah.Signup)
 	mux.HandleFunc("POST /login", ah.Login)
 	mux.HandleFunc("GET /{slug}", h.Redirect)
@@ -65,9 +64,8 @@ func main() {
 	mux.HandleFunc("GET /auth/google", oh.GoogleLogin)
 	mux.HandleFunc("GET /auth/google/callback", oh.GoogleCallback)
 
-	//protected routes
-	mux.HandleFunc("POST /shorten", handler.RequireAuth(h.ShortenURL))
 
+	mux.HandleFunc("POST /shorten", handler.RequireAuth(h.ShortenURL))
 	mux.HandleFunc("GET /urls", handler.RequireAuth(h.ListURLs))	
 	mux.HandleFunc("GET /{slug}/stats", handler.RequireAuth(h.Stats))
 

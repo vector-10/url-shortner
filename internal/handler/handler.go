@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 	"github.com/vector-10/url-shortner/internal/store"
 )
 
-// this handler is the layer where HTTP requests come in and are processed
+
 type Handler struct {
 	store store.Store
 	cache *store.RedisCache
@@ -151,7 +152,7 @@ func (h *Handler) QRCode(w http.ResponseWriter, r*http.Request) {
 		return
 	}
 
-	shortURL := "http://localhost:8080/" + slug
+	shortURL := os.Getenv("BASE_URL") + "/" + slug
 	png, err := qrcode.Encode(shortURL, qrcode.Medium, 256)
 	if err != nil {
 		http.Error(w, "could not generate QR code", http.StatusInternalServerError)

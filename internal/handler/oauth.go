@@ -84,7 +84,7 @@ func (h *OAuthHandler) GoogleCallback(W http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(W, r, "http://localhost:5173?token="+jwtToken, http.StatusTemporaryRedirect)
+	http.Redirect(W, r, os.Getenv("FRONTEND_URL")+"?token="+jwtToken, http.StatusTemporaryRedirect)
 
 
 
