@@ -11,6 +11,7 @@ type Store interface {
  ListByUser(userID string) ([]*models.URLRecord, error)
  LogClickEvent(event *models.ClickEvent) error
  DeactivateSlug(slug string) error
+ RedeemSlug(slug string) (*models.URLRecord, error)
 }
 
 

@@ -64,6 +64,32 @@ func (p *PostgresStore) GetBySlug(slug string) (*models.URLRecord, error) {
 	return &record, nil
 }
 
+func (p *PostgresStore) RedeemSlug(slug string) (*models.URLRecord, error) {
+	row := p.db.QueryRow(`
+	UPDATE url_records SET is_active = false WHERE slug = $1 AND is_active = true RETURNING id, slug, long_url, user_id, created_at, expires_at, max_clicks, total_clicks, link_type`, slug)
+
+	var record models.URLRecord
+	err := row.Scan(
+		&record.ID,
+		&record.Slug,
+		&record.LongURL,
+		&record.UserID,
+		&record.CreatedAt,
+		&record.ExpiresAt,
+		&record.MaxClicks,
+		&record.TotalClicks,
+		&record.LinkType,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
 func (p *PostgresStore) IncrementClicks(slug string) error {
 	_, err := p.db.Exec(`UPDATE url_records SET total_clicks = total_clicks + 1 WHERE slug = $1`, slug)
 	return err

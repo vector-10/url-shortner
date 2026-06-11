@@ -109,8 +109,17 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
     logClickEvent(h, slug, r, true, "")
 
     if record.MaxClicks != nil && *record.MaxClicks == 1 {
-        h.store.DeactivateSlug(slug)
-        h.cache.InvalidateSlug(slug)
+        redeemed, err := h.store.RedeemSlug(slug)
+		if err != nil {
+			http.Error(w, "server error", http.StatusInternalServerError)
+			return
+		}
+		if redeemed == nil {
+			logClickEvent(h, slug, r, false, "slug already redeemed")
+			http.Error(w, "The link has already been used", http.StatusGone)
+			return
+		}
+		h.cache.InvalidateSlug(slug)
     }
 
     h.store.IncrementClicks(slug)
