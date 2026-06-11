@@ -90,19 +90,19 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 
 	if !record.IsActive {
 		logClickEvent(h, slug, r, false, "link inactive")
-		http.Error(w, "URL is not active", http.StatusFound)
+		http.Error(w, "The link has been used or is no longer active", http.StatusGone)
 		return
 	}
 
 	if record.ExpiresAt != nil && time.Now().After(*record.ExpiresAt) {
 		logClickEvent(h, slug, r, false, "link expired")
-		http.Error(w, "URL has expired", http.StatusFound)
+		http.Error(w, "The link has expired", http.StatusGone)
 		return
 	}
 
 	if record.MaxClicks != nil && record.TotalClicks >= *record.MaxClicks {
         logClickEvent(h, slug, r, false, "max_clicks_reached")
-        http.Error(w, "URL not found", http.StatusNotFound)
+        http.Error(w, "The link has reached its maximum click limit", http.StatusGone)
         return
     }
 
