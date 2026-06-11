@@ -106,8 +106,8 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    logClickEvent(h, slug, r, true, "")
-
+    
+    // this if else block handles single-use clicks by logging the click else it logs for regular links
     if record.MaxClicks != nil && *record.MaxClicks == 1 {
         redeemed, err := h.store.RedeemSlug(slug)
 		if err != nil {
@@ -119,8 +119,11 @@ func (h *Handler) Redirect(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "The link has already been used", http.StatusGone)
 			return
 		}
+		logClickEvent(h, slug, r, true, "")
 		h.cache.InvalidateSlug(slug)
-    }
+    } else {
+		logClickEvent(h, slug, r, true, "")
+	}
 
     h.store.IncrementClicks(slug)
     http.Redirect(w, r, record.LongURL, http.StatusFound)
