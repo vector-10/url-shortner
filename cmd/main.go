@@ -37,6 +37,8 @@ func main() {
 	godotenv.Load()
 
 	db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
 	if err != nil {
 		log.Fatal("failed to connect to postgres:", err)
 	}

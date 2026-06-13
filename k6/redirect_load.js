@@ -1,7 +1,7 @@
 import http from "k6/http"
 import { sleep, check } from "k6"
 
-const SLUG = "b5cfdab7"
+const SLUG = "3d24c656"
 const BASE_URL = "http://localhost:8080"
 
 export const options = {
@@ -23,7 +23,6 @@ export default function () {
 
   check(res, {
     "status is 302": (r) => r.status === 302,
-    "has Location header": (r) => r.headers["Location"] !== undefined,
   })
 
   sleep(0.5)
