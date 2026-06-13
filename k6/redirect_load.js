@@ -6,9 +6,9 @@ const BASE_URL = "http://localhost:8080"
 
 export const options = {
   stages: [
-    { duration: "15s", target: 50 },   // ramp up to 50 users
-    { duration: "30s", target: 200 },  // hold at 200 users
-    { duration: "15s", target: 0 },    // ramp down
+    { duration: "15s", target: 50 },  // ramp up to 100 users
+    { duration: "30s", target: 200 },  // hold at 500 users
+    { duration: "20s", target: 0 },    // ramp down
   ],
   thresholds: {
     http_req_duration: ["p(95)<200"],  // 95% of requests must finish under 200ms

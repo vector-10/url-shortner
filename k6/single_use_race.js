@@ -6,7 +6,7 @@ const TOKEN = __ENV.JWT_TOKEN      // pass via: k6 run -e JWT_TOKEN=xxx single_u
 
 export const options = {
   vus: 2,           // exactly two users hitting the same slug simultaneously
-  iterations: 1,    // one attempt per VU — total 2 requests at the same time
+  iterations: 2,    // one attempt per VU — total 2 requests at the same time
   thresholds: {
     checks: ["rate==1.0"],  // all checks must pass
   },
