@@ -1,8 +1,10 @@
 # snip
 
-Most URL shorteners are demos. This one is built around a specific problem: **payment links in fintech systems cannot be redeemed twice**. A double-spent payment link is not a UI bug — it is a financial loss and a compliance incident.
+Sending a link is simple. But in fintech, that link might be a payment request, an identity verification flow, or a new user's first step into your product. When it goes wrong — redeemed twice, expired too early, or never tracked — the consequence is not a broken page. It is a failed payment, a compliance gap, or a user who never completes onboarding.
 
-snip is a link management service that treats that constraint as a first-class engineering problem. It uses an atomic Postgres `UPDATE...RETURNING` to guarantee that a single-use link can only be redeemed once, even under concurrent load. Everything else — the caching layer, the audit trail, the per-type expiry — exists to support that guarantee in production conditions.
+snip is a link management service built around these use cases. Payment links expire in 48 hours and can only be redeemed once. KYC links give users 7 days. Onboarding links stay alive until acted on. Every redirect attempt is logged — because in regulated systems, "I think it worked" is not good enough.
+
+The core engineering problem is atomicity. A single-use link that gets redeemed twice under concurrent load is not an edge case, it is a broken guarantee. snip solves this with a single atomic Postgres queries that makes the read and write indivisible.
 
 ---
 
