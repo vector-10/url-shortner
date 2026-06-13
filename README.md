@@ -8,9 +8,9 @@ The core engineering problem is atomicity. A single-use link that gets redeemed 
 
 ---
 
-## Architecture
+## ERD
 
-<!-- Add your system design diagram here -->
+![snip ERD](snip-(url_shortener).png)
 
 ---
 
